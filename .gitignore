@@ -1,0 +1,7 @@
+# Toolchain + generated build artifacts (regenerated via `graph codegen` / `graph build` / `redstart build`)
+node_modules/
+subgraph/generated/
+subgraph/build/
+redstart/build/
+*.wasm
+.DS_Store
