@@ -1,0 +1,59 @@
+# yatr - https://github.com/cargopete/yatr
+#
+# Task names are the same across every nightswatchhq repo, so `yatr ci` means
+# the same thing wherever you are. Note that `ci` is deliberately not called
+# `check`: `yatr check` is a builtin that validates this file, and it shadows
+# any task of that name without warning.
+
+# One subgraph, expressed twice: a Redstart source and the AssemblyScript
+# subgraph it transpiles to. The point of the repo is that the two agree.
+
+[settings]
+cache = true
+
+[tasks.install]
+desc = "Install the subgraph toolchain from the lockfile"
+run = ["npm ci"]
+cwd = "subgraph"
+sources = ["subgraph/package.json", "subgraph/package-lock.json"]
+
+[tasks.codegen]
+desc = "Generate the subgraph types from the manifest and ABIs"
+run = ["npm run codegen"]
+cwd = "subgraph"
+sources = ["subgraph/subgraph.yaml", "subgraph/schema.graphql", "subgraph/abis/**/*.json"]
+
+[tasks.build]
+desc = "Build the subgraph to WASM"
+run = ["npm run build"]
+cwd = "subgraph"
+depends = ["codegen"]
+sources = ["subgraph/src/**/*.ts", "subgraph/schema.graphql", "subgraph/subgraph.yaml"]
+
+[tasks.redstart]
+desc = "Compile the Redstart source (needs the redstart binary on PATH)"
+run = ["redstart build redstart/redstart.toml"]
+sources = ["redstart/redstart.toml", "redstart/src/**/*"]
+allow_failure = true
+
+[tasks.links]
+desc = "Fail if a relative markdown link points at a file that is not there"
+shell = true
+sources = ["**/*.md"]
+run = ['''
+missing=0
+for f in $(git ls-files '*.md'); do
+  d=$(dirname "$f")
+  for l in $(grep -oE '\]\([^)]+\)' "$f" | sed 's/^](//;s/)$//' | grep -vE '^(https?:|mailto:|#|<)' | sed 's/#.*$//'); do
+    [ -z "$l" ] && continue
+    if [ ! -e "$d/$l" ]; then echo "broken: $f -> $l"; missing=$((missing+1)); fi
+  done
+done
+if [ "$missing" -ne 0 ]; then echo "$missing broken relative link(s)"; exit 1; fi
+echo "all relative markdown links resolve"
+''']
+
+[tasks.ci]
+desc = "What CI runs: links, codegen, build"
+depends = ["links", "codegen", "build"]
+run = []
