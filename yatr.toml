@@ -12,23 +12,23 @@
 cache = true
 
 [tasks.install]
-desc = "Install the subgraph toolchain from the lockfile"
-run = ["npm ci"]
+desc = "Install the subgraph toolchain (no lockfile is committed, so this is not reproducible)"
+run = ["npm install"]
 cwd = "subgraph"
-sources = ["subgraph/package.json", "subgraph/package-lock.json"]
+sources = ["package.json"]
 
 [tasks.codegen]
 desc = "Generate the subgraph types from the manifest and ABIs"
 run = ["npm run codegen"]
 cwd = "subgraph"
-sources = ["subgraph/subgraph.yaml", "subgraph/schema.graphql", "subgraph/abis/**/*.json"]
+sources = ["subgraph.yaml", "schema.graphql", "abis/**/*.json"]
 
 [tasks.build]
 desc = "Build the subgraph to WASM"
 run = ["npm run build"]
 cwd = "subgraph"
 depends = ["codegen"]
-sources = ["subgraph/src/**/*.ts", "subgraph/schema.graphql", "subgraph/subgraph.yaml"]
+sources = ["src/**/*.ts", "schema.graphql", "subgraph.yaml"]
 
 [tasks.redstart]
 desc = "Compile the Redstart source (needs the redstart binary on PATH)"
